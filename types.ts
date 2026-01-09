@@ -5,7 +5,7 @@ export enum AppTab {
   LIVE = 'live'
 }
 
-export type IdentityTag = 'homem' | 'mulher' | 'mulher_trans' | 'homem_trans' | 'nao_binario' | 'outro';
+export type IdentityTag = 'homem' | 'mulher' | 'trans';
 
 export interface UserPreferences {
   myIdentity: IdentityTag | null;

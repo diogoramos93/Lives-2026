@@ -1,7 +1,6 @@
 
 import { StreamInfo } from './types';
 
-// Fix: Adding missing required properties 'socketId' and 'startedAt' to comply with StreamInfo interface.
 export const MOCK_STREAMS: StreamInfo[] = [
   {
     id: '1',
@@ -30,27 +29,16 @@ export const MOCK_STREAMS: StreamInfo[] = [
     viewerCount: 45,
     thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=225&fit=crop',
     streamerName: 'Anônimo 877',
-    tag: 'mulher_trans',
+    tag: 'trans',
     startedAt: Date.now() - 900000
-  },
-  {
-    id: '4',
-    socketId: 'mock-socket-4',
-    title: 'Gaming & Chill 🎮',
-    viewerCount: 231,
-    thumbnail: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=225&fit=crop',
-    streamerName: 'Anônimo 332',
-    tag: 'homem',
-    startedAt: Date.now() - 7200000
   }
 ];
 
-// Lista de termos proibidos para o filtro local (expanda conforme necessário)
 export const FORBIDDEN_WORDS = [
   'ofensa1', 
   'ofensa2', 
   'racismo', 
   'nazismo', 
-  'cpflive', // Exemplo de spam comum
+  'cpflive',
   'venda de conta'
 ];
