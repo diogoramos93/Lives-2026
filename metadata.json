@@ -1,0 +1,14 @@
+{
+  "name": "Lives 2026",
+  "short_name": "LiveFlow",
+  "description": "Chat de vídeo anônimo 1v1 e streaming em tempo real focado em privacidade e segurança para adultos.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "orientation": "portrait",
+  "start_url": "/",
+  "background_color": "#020617",
+  "theme_color": "#4f46e5",
+  "display": "standalone"
+}
