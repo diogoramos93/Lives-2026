@@ -10,8 +10,10 @@ export const moderateLocalText = (text: string): boolean => {
 export const moderateAIText = async (text: string): Promise<boolean> => {
   try {
     // A chave deve vir obrigatoriamente do process.env.API_KEY injetado
+    // Fix: Using named parameter for GoogleGenAI initialization.
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
+    // Fix: Using generateContent with correct model name and prompt as per guidelines.
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Analise se a seguinte mensagem é imprópria: "${text}". Responda apenas SAFE ou UNSAFE.`,
@@ -20,7 +22,8 @@ export const moderateAIText = async (text: string): Promise<boolean> => {
       }
     });
 
-    const result = response.text?.trim().toUpperCase() || '';
+    // Fix: Correctly access the .text property from the GenerateContentResponse.
+    const result = (response.text || '').trim().toUpperCase();
     return result === 'SAFE';
   } catch (error) {
     console.error('Moderation Error:', error);

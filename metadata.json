@@ -1,6 +1,6 @@
 {
   "name": "Lives 2026",
-  "short_name": "LiveFlow",
+  "short_name": "MaisJob",
   "description": "Chat de vídeo anônimo 1v1 e streaming em tempo real focado em privacidade e segurança para adultos.",
   "requestFramePermissions": [
     "camera",

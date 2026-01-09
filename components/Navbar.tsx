@@ -19,7 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
           <div className="bg-indigo-600 p-1.5 rounded-lg">
             <Zap size={20} fill="white" className="text-white" />
           </div>
-          <span className="font-black text-xl tracking-tighter">LIVEFLOW</span>
+          <span className="font-black text-xl tracking-tighter">MAISJOB</span>
         </div>
 
         <div className="flex gap-1 md:gap-4">

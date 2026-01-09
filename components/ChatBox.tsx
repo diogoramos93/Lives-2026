@@ -54,11 +54,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({ messages, onSendMessage, placeholder 
             <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm ${
               msg.user === 'Você' 
                 ? 'bg-indigo-600 text-white rounded-tr-none' 
-                : msg.user === 'LiveFlow' || msg.user === 'Sistema'
+                : msg.user === 'MaisJob' || msg.user === 'Sistema'
                   ? 'bg-slate-800/50 text-slate-400 text-xs italic border border-slate-700/50'
                   : 'bg-slate-800 text-slate-200 rounded-tl-none'
             }`}>
-              {msg.user !== 'Você' && msg.user !== 'LiveFlow' && msg.user !== 'Sistema' && (
+              {msg.user !== 'Você' && msg.user !== 'MaisJob' && msg.user !== 'Sistema' && (
                 <div className="text-[10px] font-black mb-1 text-indigo-400 uppercase tracking-tighter">
                   Estranho
                 </div>

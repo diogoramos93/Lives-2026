@@ -16,7 +16,8 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-// Fixed: Using the imported Component directly to fix "Property 'props' does not exist" error.
+// Fix: Use the named 'Component' import from React and provide generic type parameters 
+// to ensure the TypeScript compiler correctly recognizes 'this.props' and 'this.state'.
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { hasError: false };
 
@@ -37,6 +38,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         </div>
       );
     }
+    // Fix: Accessing children via this.props which is now correctly inherited from Component<ErrorBoundaryProps, ErrorBoundaryState>
     return this.props.children;
   }
 }
@@ -103,7 +105,7 @@ const App = () => {
         {activeTab === AppTab.HOME && (
           <div className="flex flex-col items-center justify-center h-full p-6 text-center animate-in fade-in zoom-in duration-700">
             <h1 className="text-6xl md:text-8xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent tracking-tighter">
-              LIVEFLOW
+              MAISJOB
             </h1>
             <p className="text-slate-400 mb-12 text-lg">
               Olá, <span className="text-indigo-400 font-bold capitalize">{identityLabel}</span>. Pronto para conectar?
