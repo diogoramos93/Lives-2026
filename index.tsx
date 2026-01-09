@@ -16,13 +16,9 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-// Fix: Explicitly extending Component and declaring properties to resolve TypeScript access errors
+// Fixed: Using the imported Component directly to fix "Property 'props' does not exist" error.
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { hasError: false };
-
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-  }
 
   static getDerivedStateFromError() {
     return { hasError: true };
@@ -33,16 +29,14 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   render() {
-    // Fix: Access state safely after proper declaration
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 text-center">
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 text-center text-white">
           <h1 className="text-xl font-bold mb-4">Erro de Inicialização</h1>
-          <button onClick={() => window.location.reload()} className="bg-indigo-600 px-6 py-2 rounded-xl text-sm">Recarregar</button>
+          <button onClick={() => window.location.reload()} className="bg-indigo-600 px-6 py-2 rounded-xl text-sm font-bold">Recarregar</button>
         </div>
       );
     }
-    // Fix: Access props safely after proper declaration
     return this.props.children;
   }
 }
@@ -56,11 +50,11 @@ const App = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.HOME);
 
   useEffect(() => {
-    // Remove o loader do HTML assim que o React estiver pronto
+    // Remove o loader com transição de opacidade
     const loader = document.getElementById('initial-loader');
     if (loader) {
       loader.style.opacity = '0';
-      setTimeout(() => loader.remove(), 500);
+      setTimeout(() => loader.remove(), 600);
     }
 
     try {
@@ -101,18 +95,47 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500/30">
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="flex-1 overflow-hidden relative">
         {activeTab === AppTab.RANDOM && <RandomTab preferences={preferences} />}
         {activeTab === AppTab.LIVE && <LiveTab preferences={preferences} />}
         {activeTab === AppTab.HOME && (
-          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-            <h1 className="text-6xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent">LIVEFLOW</h1>
-            <p className="text-slate-400 mb-8">Olá, <span className="text-indigo-400 font-bold capitalize">{identityLabel}</span>.</p>
-            <div className="flex gap-4">
-              <button onClick={() => setActiveTab(AppTab.RANDOM)} className="bg-indigo-600 px-8 py-4 rounded-2xl font-bold">CHAT RANDOM</button>
-              <button onClick={() => setActiveTab(AppTab.LIVE)} className="bg-slate-800 px-8 py-4 rounded-2xl font-bold">VER LIVES</button>
+          <div className="flex flex-col items-center justify-center h-full p-6 text-center animate-in fade-in zoom-in duration-700">
+            <h1 className="text-6xl md:text-8xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent tracking-tighter">
+              LIVEFLOW
+            </h1>
+            <p className="text-slate-400 mb-12 text-lg">
+              Olá, <span className="text-indigo-400 font-bold capitalize">{identityLabel}</span>. Pronto para conectar?
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+              <button 
+                onClick={() => setActiveTab(AppTab.RANDOM)} 
+                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-5 rounded-2xl font-black text-xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-indigo-600/20"
+              >
+                CHAT RANDOM
+              </button>
+              <button 
+                onClick={() => setActiveTab(AppTab.LIVE)} 
+                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-8 py-5 rounded-2xl font-black text-xl transition-all hover:scale-105 active:scale-95 border border-white/5"
+              >
+                VER LIVES
+              </button>
+            </div>
+            
+            <div className="mt-16 grid grid-cols-3 gap-8 opacity-40">
+               <div className="flex flex-col items-center gap-2">
+                 <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                 <span className="text-[10px] font-black uppercase tracking-widest">Privado</span>
+               </div>
+               <div className="flex flex-col items-center gap-2">
+                 <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                 <span className="text-[10px] font-black uppercase tracking-widest">Seguro</span>
+               </div>
+               <div className="flex flex-col items-center gap-2">
+                 <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                 <span className="text-[10px] font-black uppercase tracking-widest">Rápido</span>
+               </div>
             </div>
           </div>
         )}

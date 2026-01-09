@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { SkipForward, Globe, ShieldAlert, WifiOff, Link, User } from 'lucide-react';
+import { SkipForward, Globe, SkipBack, User } from 'lucide-react';
 import Button from './Button';
 import ChatBox from './ChatBox';
 import { ChatMessage, UserPreferences } from '../types';
@@ -131,7 +131,6 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
     socketRef.current?.emit('leave_match');
     cleanup(false);
     setStatus('searching');
-    // Delay de 1.5s para evitar match imediato com a mesma pessoa e dar tempo do servidor processar
     setTimeout(() => {
       startMatchmaking();
     }, 1500);
@@ -154,7 +153,7 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
           </div>
           <h2 className="text-4xl font-black mb-4 tracking-tighter">Pronto para começar?</h2>
           <p className="text-slate-400 mb-8 max-w-sm font-medium">
-            Conectado ao servidor seguro em <span className="text-indigo-400 underline">{MOTOR_DOMAIN}</span>.
+            Conectado ao servidor seguro: <span className="text-indigo-400 font-bold uppercase tracking-widest">Online</span>
           </p>
 
           <Button 

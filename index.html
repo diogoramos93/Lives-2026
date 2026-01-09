@@ -10,20 +10,51 @@
     <meta name="theme-color" content="#020617">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>⚡</text></svg>">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        :root { --bg-color: #020617; }
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-color); 
-            color: #f8fafc; 
-            margin: 0; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+    <!-- Tailwind CSS Engine -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              slate: {
+                950: '#020617',
+              }
+            },
+            animation: {
+              'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
+            },
+            keyframes: {
+              'pulse-soft': {
+                '0%, 100%': { opacity: 1 },
+                '50%': { opacity: 0.7 },
+              }
+            }
+          }
         }
+      }
+    </script>
+
+    <style type="text/tailwindcss">
+      @layer base {
+        body { 
+          @apply bg-[#020617] text-slate-100 antialiased;
+          font-family: 'Inter', sans-serif;
+          margin: 0;
+          overflow: hidden;
+        }
+      }
+      @layer components {
+        .mirror { transform: scaleX(-1); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      }
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+    <style>
         #root { height: 100vh; width: 100vw; }
         #initial-loader {
             position: fixed;
@@ -35,6 +66,7 @@
             gap: 1.5rem;
             background: #020617;
             z-index: 9999;
+            transition: opacity 0.5s ease;
         }
         .spinner {
             width: 40px;
@@ -45,7 +77,6 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .mirror { transform: scaleX(-1); }
     </style>
 <script type="importmap">
 {
@@ -53,12 +84,14 @@
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
     "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "vite": "https://esm.sh/vite@^7.3.1",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "peerjs": "https://esm.sh/peerjs@^1.5.5",
     "socket.io-client": "https://esm.sh/socket.io-client@^4.8.3",
-    "peerjs": "https://esm.sh/peerjs@^1.5.5"
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "url": "https://esm.sh/url@^0.11.4",
+    "path": "https://esm.sh/path@^0.12.7"
   }
 }
 </script>
@@ -70,7 +103,7 @@
             <p style="font-size: 10px; font-weight: 900; color: #4f46e5; letter-spacing: 0.2em; text-transform: uppercase;">Carregando LiveFlow</p>
         </div>
     </div>
-    <!-- Ponto de entrada para o Vite -->
-    <script type="module" src="/index.tsx"></script>
+    <!-- Alterado para src="index.tsx" (relativo) para funcionar perfeitamente com base: './' -->
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>

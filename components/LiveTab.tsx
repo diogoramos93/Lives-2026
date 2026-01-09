@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StreamInfo, ChatMessage, UserPreferences, IdentityTag } from '../types';
 import Button from './Button';
 import ChatBox from './ChatBox';
-import { Play, Users, Radio, X, Camera, Mic, LayoutGrid, AlertCircle } from 'lucide-react';
+import { Play, Users, Radio, X, Camera, LayoutGrid } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import Peer from 'peerjs';
 
@@ -18,7 +18,7 @@ const LiveTab: React.FC<LiveTabProps> = ({ preferences }) => {
   const [selectedStream, setSelectedStream] = useState<StreamInfo | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [activeFilter, setActiveFilter] = useState<IdentityTag | 'all'>('all');
+  const [activeFilter] = useState<IdentityTag | 'all'>('all');
   
   const socketRef = useRef<Socket | null>(null);
   const peerRef = useRef<Peer | null>(null);
@@ -45,7 +45,6 @@ const LiveTab: React.FC<LiveTabProps> = ({ preferences }) => {
       }
     });
 
-    // PeerJS para o espectador receber o vídeo
     peerRef.current = new Peer({
       config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
     });
@@ -55,7 +54,7 @@ const LiveTab: React.FC<LiveTabProps> = ({ preferences }) => {
       peerRef.current?.destroy();
       stopMyStream();
     };
-  }, []);
+  }, [selectedStream]);
 
   const startMyStream = async () => {
     try {
@@ -65,7 +64,6 @@ const LiveTab: React.FC<LiveTabProps> = ({ preferences }) => {
       
       if (localVideoRef.current) localVideoRef.current.srcObject = media;
 
-      // Quando alguém "chamar" (call) para assistir
       peerRef.current?.on('call', (call) => {
         call.answer(streamRef.current!);
       });
@@ -94,8 +92,7 @@ const LiveTab: React.FC<LiveTabProps> = ({ preferences }) => {
     setMessages([]);
     socketRef.current?.emit('join_live_room', stream.id);
 
-    // O espectador "liga" para o streamer
-    const call = peerRef.current?.call(stream.id, new MediaStream()); // Chamada vazia só para receber
+    const call = peerRef.current?.call(stream.id, new MediaStream());
     call?.on('stream', (remoteStream) => {
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
     });
@@ -139,7 +136,7 @@ const LiveTab: React.FC<LiveTabProps> = ({ preferences }) => {
               onClick={isStreaming ? stopMyStream : closeStream}
               className="bg-white/10 hover:bg-rose-600 p-4 rounded-3xl backdrop-blur-xl transition-all shadow-2xl group"
             >
-              <X size={24} className="group-hover:rotate-90 transition-transform" />
+              <X size={24} className="group-hover:rotate-90 transition-transform text-white" />
             </button>
           </div>
 
@@ -172,7 +169,7 @@ const LiveTab: React.FC<LiveTabProps> = ({ preferences }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-5xl font-black mb-2 tracking-tighter">Explorar</h1>
-          <p className="text-slate-500 font-medium">Transmissões ao vivo agora no {MOTOR_DOMAIN}</p>
+          <p className="text-slate-500 font-medium">Transmissões ao vivo agora</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -201,7 +198,7 @@ const LiveTab: React.FC<LiveTabProps> = ({ preferences }) => {
                    <Play size={48} className="text-white/20 group-hover:text-indigo-500 group-hover:scale-125 transition-all duration-500" />
                 </div>
                 <div className="absolute top-4 left-4 flex gap-2">
-                  <span className="bg-rose-600 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter shadow-lg">LIVE</span>
+                  <span className="bg-rose-600 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter shadow-lg text-white">LIVE</span>
                 </div>
               </div>
               <div className="p-6">
