@@ -6,7 +6,10 @@ import RandomTab from './components/RandomTab';
 import LiveTab from './components/LiveTab';
 import AgeGate from './components/AgeGate';
 import IdentitySetup from './components/IdentitySetup';
-import { Settings2 } from 'lucide-react';
+import { Settings2, Users } from 'lucide-react';
+import { io } from 'socket.io-client';
+
+const MOTOR_DOMAIN = 'fotos.diogoramos.esp.br';
 
 interface ErrorBoundaryProps {
   children?: ReactNode;
@@ -16,7 +19,6 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-// Fix: Explicitly importing and extending 'Component' from 'react' ensures the TypeScript compiler correctly identifies 'this.props' in the class.
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { hasError: false };
 
@@ -37,13 +39,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         </div>
       );
     }
-    // Fix: Accessing 'this.props.children' now works correctly as 'ErrorBoundary' is explicitly recognized as a React Component.
     return this.props.children;
   }
 }
 
 const App = () => {
   const [is18Plus, setIs18Plus] = useState<boolean | null>(null);
+  const [onlineCount, setOnlineCount] = useState<number>(0);
   const [preferences, setPreferences] = useState<UserPreferences>({
     myIdentity: null,
     lookingFor: []
@@ -57,6 +59,10 @@ const App = () => {
       setTimeout(() => loader.remove(), 600);
     }
 
+    // Monitoramento global de usuários online
+    const socket = io(`https://${MOTOR_DOMAIN}`, { transports: ['websocket'] });
+    socket.on('online_stats', (count: number) => setOnlineCount(count));
+
     try {
       const ageConfirmed = sessionStorage.getItem('age_confirmed') === 'true';
       if (ageConfirmed) setIs18Plus(true);
@@ -69,6 +75,8 @@ const App = () => {
     } catch (e) {
       console.warn("Session error:", e);
     }
+
+    return () => { socket.disconnect(); };
   }, []);
 
   const handleAgeConfirm = () => {
@@ -108,6 +116,11 @@ const App = () => {
         {activeTab === AppTab.HOME && (
           <div className="flex flex-col items-center justify-center h-full w-full p-6 text-center animate-in fade-in zoom-in duration-700 overflow-y-auto hide-scrollbar">
             <div className="w-full max-w-lg flex flex-col items-center py-10">
+              <div className="mb-6 flex items-center gap-2 bg-indigo-500/10 px-4 py-1.5 rounded-full border border-indigo-500/20">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{onlineCount} Pessoas Conectadas</span>
+              </div>
+
               <h1 className="text-6xl sm:text-7xl md:text-8xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent tracking-tighter shrink-0">
                 MAISJOB
               </h1>

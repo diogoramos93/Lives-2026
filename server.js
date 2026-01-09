@@ -7,7 +7,7 @@ const io = require('socket.io')(3000, {
 });
 
 /**
- * MOTOR MAISJOB - VERSÃO 2026
+ * MOTOR MAISJOB - VERSÃO TURBO 2026
  * Gerencia Random Chat (1v1) e Live Streaming (1vN)
  */
 
@@ -16,11 +16,10 @@ let activeStreams = [];
 
 console.log("------------------------------------------");
 console.log("🚀 MOTOR MAISJOB LIVEFLOW ONLINE");
-console.log("📍 Porta: 3000");
+console.log("📍 Modo: Conexão Agressiva (Sem Limite de Repetição)");
 console.log("------------------------------------------");
 
 io.on('connection', (socket) => {
-  // Notifica todos sobre o total de usuários online no site
   io.emit('online_stats', io.engine.clientsCount);
 
   // ==========================================
@@ -28,25 +27,23 @@ io.on('connection', (socket) => {
   // ==========================================
   
   socket.on('join_queue', (userData) => {
-    // Evita duplicidade na fila
+    // Limpa fila anterior para evitar bugs
     usersInQueue = usersInQueue.filter(u => u.socketId !== socket.id);
     
     const newUser = {
       socketId: socket.id,
       peerId: userData.peerId,
       identity: userData.identity,
-      lookingFor: userData.lookingFor,
-      lastPartnerId: socket.lastPartnerId || null
+      lookingFor: userData.lookingFor
     };
 
-    // Busca parceiro compatível (Gênero e não ser o último parceiro)
+    // Busca parceiro compatível (Sem restrição de 'lastPartner')
     const partnerIndex = usersInQueue.findIndex(u => {
       const iMatchPartner = (newUser.lookingFor.length === 0 || newUser.lookingFor.includes(u.identity));
       const partnerMatchesMe = (u.lookingFor.length === 0 || u.lookingFor.includes(newUser.identity));
       const notSamePerson = u.socketId !== socket.id;
-      const notPreviousPartner = u.socketId !== newUser.lastPartnerId;
       
-      return notSamePerson && notPreviousPartner && iMatchPartner && partnerMatchesMe;
+      return notSamePerson && iMatchPartner && partnerMatchesMe;
     });
 
     if (partnerIndex !== -1) {
@@ -54,12 +51,11 @@ io.on('connection', (socket) => {
       const roomId = `room_${socket.id}_${partner.socketId}`;
       
       socket.join(roomId);
-      // Conecta os dois Peers
+      // Notifica ambos simultaneamente
       io.to(partner.socketId).emit('match_found', { peerId: newUser.peerId, partnerInfo: newUser });
       socket.emit('match_found', { peerId: partner.peerId, partnerInfo: partner });
       
       socket.currentRoom = roomId;
-      socket.lastPartnerId = partner.socketId;
       console.log(`[Random] Match: ${newUser.identity} <-> ${partner.identity}`);
     } else {
       usersInQueue.push(newUser);
@@ -74,6 +70,7 @@ io.on('connection', (socket) => {
 
   socket.on('leave_match', () => {
     if (socket.currentRoom) {
+      // Notifica o parceiro para ele buscar outro automaticamente
       socket.to(socket.currentRoom).emit('partner_disconnected');
       socket.leave(socket.currentRoom);
       socket.currentRoom = null;
@@ -86,42 +83,25 @@ io.on('connection', (socket) => {
   // ==========================================
 
   socket.on('start_stream', (data) => {
-    // Remove qualquer stream anterior do mesmo socket
     activeStreams = activeStreams.filter(s => s.socketId !== socket.id);
-    
     const newStream = {
-      ...data, // peerId (id), title, tag, streamerName
+      ...data,
       socketId: socket.id,
       viewerCount: 0,
       startedAt: Date.now()
     };
-    
     activeStreams.push(newStream);
-    console.log(`[Live] Nova transmissão: ${newStream.title}`);
     io.emit('active_streams', activeStreams);
+    console.log(`[Live] Nova transmissão de: ${newStream.tag}`);
   });
 
   socket.on('join_live_room', (streamId) => {
     const roomName = `live_${streamId}`;
     socket.join(roomName);
-    
-    // Atualiza contagem de espectadores na lista global
     const stream = activeStreams.find(s => s.id === streamId);
     if (stream) {
       const room = io.sockets.adapter.rooms.get(roomName);
       stream.viewerCount = room ? room.size : 1;
-      io.emit('active_streams', activeStreams);
-    }
-  });
-
-  socket.on('leave_live_room', (streamId) => {
-    const roomName = `live_${streamId}`;
-    socket.leave(roomName);
-    
-    const stream = activeStreams.find(s => s.id === streamId);
-    if (stream) {
-      const room = io.sockets.adapter.rooms.get(roomName);
-      stream.viewerCount = room ? room.size : 0;
       io.emit('active_streams', activeStreams);
     }
   });
@@ -144,30 +124,17 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ==========================================
-  // DESCONEXÃO E LIMPEZA
-  // ==========================================
-
   socket.on('disconnect', () => {
-    // 1. Limpa Random Chat
     if (socket.currentRoom) {
       socket.to(socket.currentRoom).emit('partner_disconnected');
     }
     usersInQueue = usersInQueue.filter(u => u.socketId !== socket.id);
-
-    // 2. Limpa Lives (Se era o Streamer)
+    
     const stream = activeStreams.find(s => s.socketId === socket.id);
     if (stream) {
       io.to(`live_${stream.id}`).emit('stream_ended', stream.id);
       activeStreams = activeStreams.filter(s => s.socketId !== socket.id);
     }
-    
-    // 3. Atualiza audiência geral
-    activeStreams.forEach(s => {
-      const room = io.sockets.adapter.rooms.get(`live_${s.id}`);
-      s.viewerCount = room ? room.size : 0;
-    });
-
     io.emit('active_streams', activeStreams);
     io.emit('online_stats', io.engine.clientsCount);
   });
