@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useMemo, Component, ReactNode } from 'react';
+import React, { useState, useEffect, useMemo, Component, ReactNode, ErrorInfo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { AppTab, UserPreferences, IdentityTag } from './types';
+import { AppTab, UserPreferences } from './types';
 import Navbar from './components/Navbar';
 import RandomTab from './components/RandomTab';
 import LiveTab from './components/LiveTab';
@@ -14,10 +14,9 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error?: Error;
 }
 
-// Fix: Extending the imported Component directly to resolve the property 'props' not existing error (line 58)
+// Fix: Explicitly extending Component and declaring properties to resolve TypeScript access errors
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { hasError: false };
 
@@ -25,38 +24,25 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     super(props);
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState { 
-    return { hasError: true, error }; 
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Critical Render Error caught by Boundary:", error, errorInfo);
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Critical Error:", error, info);
   }
 
   render() {
+    // Fix: Access state safely after proper declaration
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 text-center">
-          <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-6">
-            <span className="text-4xl">⚠️</span>
-          </div>
-          <h1 className="text-2xl font-black mb-2 text-white">Erro de Inicialização</h1>
-          <p className="text-slate-400 mb-8 max-w-xs text-sm">
-            Houve um problema ao carregar os módulos de vídeo. Tente limpar o cache do navegador.
-          </p>
-          <button 
-            onClick={() => {
-              sessionStorage.clear();
-              window.location.reload();
-            }} 
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-2xl font-bold transition-all"
-          >
-            Resetar e Recarregar
-          </button>
+          <h1 className="text-xl font-bold mb-4">Erro de Inicialização</h1>
+          <button onClick={() => window.location.reload()} className="bg-indigo-600 px-6 py-2 rounded-xl text-sm">Recarregar</button>
         </div>
       );
     }
-    // Accessing this.props.children is now correctly typed
+    // Fix: Access props safely after proper declaration
     return this.props.children;
   }
 }
@@ -70,7 +56,13 @@ const App = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.HOME);
 
   useEffect(() => {
-    console.log("LiveFlow: App component mounted successfully.");
+    // Remove o loader do HTML assim que o React estiver pronto
+    const loader = document.getElementById('initial-loader');
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.remove(), 500);
+    }
+
     try {
       const ageConfirmed = sessionStorage.getItem('age_confirmed') === 'true';
       if (ageConfirmed) setIs18Plus(true);
@@ -78,12 +70,10 @@ const App = () => {
       const savedPrefs = sessionStorage.getItem('user_prefs');
       if (savedPrefs) {
         const parsed = JSON.parse(savedPrefs);
-        if (parsed && parsed.myIdentity) {
-          setPreferences(parsed);
-        }
+        if (parsed?.myIdentity) setPreferences(parsed);
       }
     } catch (e) {
-      console.error("LiveFlow: Failed to load session data:", e);
+      console.warn("Session error:", e);
     }
   }, []);
 
@@ -111,38 +101,18 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500/30">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="flex-1 overflow-hidden relative">
         {activeTab === AppTab.RANDOM && <RandomTab preferences={preferences} />}
         {activeTab === AppTab.LIVE && <LiveTab preferences={preferences} />}
         {activeTab === AppTab.HOME && (
-          <div className="flex flex-col items-center justify-center h-full p-6 text-center animate-in fade-in zoom-in duration-500">
-            <div className="mb-8 relative">
-              <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full"></div>
-              <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter relative bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent">
-                LIVEFLOW
-              </h1>
-            </div>
-            
-            <p className="text-slate-400 mb-12 max-w-md text-lg leading-relaxed">
-              Você está navegando como <span className="text-indigo-400 font-bold capitalize">{identityLabel}</span>.
-              Conexão segura via <span className="text-slate-200">fotos.diogoramos.esp.br</span>.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-              <button 
-                onClick={() => setActiveTab(AppTab.RANDOM)} 
-                className="flex-1 bg-indigo-600 hover:bg-indigo-500 px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-600/20 transition-all active:scale-95"
-              >
-                MODO RANDOM
-              </button>
-              <button 
-                onClick={() => setActiveTab(AppTab.LIVE)} 
-                className="flex-1 bg-slate-800 hover:bg-slate-700 px-8 py-4 rounded-2xl font-black transition-all active:scale-95"
-              >
-                VER LIVES
-              </button>
+          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+            <h1 className="text-6xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent">LIVEFLOW</h1>
+            <p className="text-slate-400 mb-8">Olá, <span className="text-indigo-400 font-bold capitalize">{identityLabel}</span>.</p>
+            <div className="flex gap-4">
+              <button onClick={() => setActiveTab(AppTab.RANDOM)} className="bg-indigo-600 px-8 py-4 rounded-2xl font-bold">CHAT RANDOM</button>
+              <button onClick={() => setActiveTab(AppTab.LIVE)} className="bg-slate-800 px-8 py-4 rounded-2xl font-bold">VER LIVES</button>
             </div>
           </div>
         )}
@@ -151,15 +121,11 @@ const App = () => {
   );
 };
 
-const container = document.getElementById('root');
-if (container) {
-  // Limpa o loader inicial antes de renderizar o React
-  const root = createRoot(container);
-  root.render(
+const rootEl = document.getElementById('root');
+if (rootEl) {
+  createRoot(rootEl).render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
   );
-} else {
-  console.error("LiveFlow: CRITICAL - Root element not found.");
 }
