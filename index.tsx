@@ -1,12 +1,12 @@
+
 import React, { Component, useState, useEffect, useMemo, ReactNode, ErrorInfo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppTab, UserPreferences } from './types';
 import Navbar from './components/Navbar';
 import RandomTab from './components/RandomTab';
-import LiveTab from './components/LiveTab';
 import AgeGate from './components/AgeGate';
 import IdentitySetup from './components/IdentitySetup';
-import { Settings2, Users } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 const MOTOR_DOMAIN = 'fotos.diogoramos.esp.br';
@@ -59,7 +59,6 @@ const App = () => {
       setTimeout(() => loader.remove(), 600);
     }
 
-    // Monitoramento global de usuários online
     const socket = io(`https://${MOTOR_DOMAIN}`, { transports: ['websocket'] });
     socket.on('online_stats', (count: number) => setOnlineCount(count));
 
@@ -93,6 +92,7 @@ const App = () => {
   const resetIdentity = () => {
     sessionStorage.removeItem('user_prefs');
     setPreferences({ myIdentity: null, lookingFor: [] });
+    setActiveTab(AppTab.HOME);
   };
 
   const identityLabel = useMemo(() => {
@@ -112,13 +112,12 @@ const App = () => {
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="flex-1 relative min-h-0 w-full overflow-hidden">
         {activeTab === AppTab.RANDOM && <RandomTab preferences={preferences} />}
-        {activeTab === AppTab.LIVE && <LiveTab preferences={preferences} />}
         {activeTab === AppTab.HOME && (
           <div className="flex flex-col items-center justify-center h-full w-full p-6 text-center animate-in fade-in zoom-in duration-700 overflow-y-auto hide-scrollbar">
             <div className="w-full max-w-lg flex flex-col items-center py-10">
               <div className="mb-6 flex items-center gap-2 bg-indigo-500/10 px-4 py-1.5 rounded-full border border-indigo-500/20">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{onlineCount} Pessoas Conectadas</span>
+                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{onlineCount} Pessoas Online Agora</span>
               </div>
 
               <h1 className="text-6xl sm:text-7xl md:text-8xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent tracking-tighter shrink-0">
@@ -127,7 +126,7 @@ const App = () => {
               
               <div className="flex flex-col items-center gap-3 mb-12 shrink-0">
                 <p className="text-slate-400 text-lg sm:text-xl">
-                  Olá, <span className="text-indigo-400 font-extrabold capitalize">{identityLabel}</span>. Pronto para conectar?
+                  Olá, <span className="text-indigo-400 font-extrabold capitalize">{identityLabel}</span>. Vamos conversar?
                 </p>
                 <button 
                   onClick={resetIdentity}
@@ -137,18 +136,12 @@ const App = () => {
                 </button>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4 w-full px-4">
+              <div className="w-full px-4 max-w-sm">
                 <button 
                   onClick={() => setActiveTab(AppTab.RANDOM)} 
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-5 rounded-3xl font-black text-xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-indigo-600/20"
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-6 rounded-3xl font-black text-2xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-indigo-600/20 uppercase tracking-tight"
                 >
-                  CHAT RANDOM
-                </button>
-                <button 
-                  onClick={() => setActiveTab(AppTab.LIVE)} 
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-8 py-5 rounded-3xl font-black text-xl transition-all hover:scale-105 active:scale-95 border border-white/5"
-                >
-                  VER LIVES
+                  CONECTAR AGORA
                 </button>
               </div>
               
@@ -159,7 +152,7 @@ const App = () => {
                  </div>
                  <div className="flex flex-col items-center gap-2">
                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
-                   <span className="text-[10px] font-black uppercase tracking-widest">Seguro</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest">Anônimo</span>
                  </div>
                  <div className="flex flex-col items-center gap-2">
                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>

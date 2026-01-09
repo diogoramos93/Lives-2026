@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppTab } from '../types';
-import { Zap, Radio, Home } from 'lucide-react';
+import { Zap, Home } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: AppTab;
@@ -22,28 +22,28 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
           <span className="font-black text-xl tracking-tighter">MAISJOB</span>
         </div>
 
-        <div className="flex gap-1 md:gap-4">
+        <div className="flex gap-2">
+          <button 
+            onClick={() => onTabChange(AppTab.HOME)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              activeTab === AppTab.HOME 
+                ? 'bg-slate-800 text-white' 
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+            }`}
+          >
+            <Home size={18} />
+            <span className="hidden sm:inline">Início</span>
+          </button>
           <button 
             onClick={() => onTabChange(AppTab.RANDOM)}
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
               activeTab === AppTab.RANDOM 
-                ? 'bg-indigo-600/10 text-indigo-400' 
+                ? 'bg-indigo-600 text-white' 
                 : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
             }`}
           >
             <Zap size={18} />
-            <span className="hidden sm:inline">Random</span>
-          </button>
-          <button 
-            onClick={() => onTabChange(AppTab.LIVE)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              activeTab === AppTab.LIVE 
-                ? 'bg-rose-600/10 text-rose-400' 
-                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
-            }`}
-          >
-            <Radio size={18} />
-            <span className="hidden sm:inline">Lives</span>
+            <span className="hidden sm:inline">Chat</span>
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { SkipForward, Globe, RefreshCw, AlertCircle } from 'lucide-react';
+import { SkipForward, Globe, MessageSquare } from 'lucide-react';
 import Button from './Button';
 import ChatBox from './ChatBox';
 import { ChatMessage, UserPreferences } from '../types';
@@ -15,10 +15,8 @@ interface RandomTabProps {
 
 const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
   const [status, setStatus] = useState<'idle' | 'searching' | 'connected'>('idle');
-  const [serverStatus, setServerStatus] = useState<'conectando' | 'online' | 'offline'>('conectando');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [partnerIdentity, setPartnerIdentity] = useState<string>('');
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -27,15 +25,18 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
   const streamRef = useRef<MediaStream | null>(null);
   const currentCallRef = useRef<any>(null);
 
+  // Inicializa o socket assim que a aba abre, mas não entra na fila ainda
   useEffect(() => {
-    const socket = io(`https://${MOTOR_DOMAIN}`, { transports: ['websocket'], secure: true });
+    const socket = io(`https://${MOTOR_DOMAIN}`, { 
+      transports: ['websocket'], 
+      forceNew: true,
+      secure: true 
+    });
     socketRef.current = socket;
-    
-    socket.on('connect', () => setServerStatus('online'));
     
     socket.on('match_found', ({ peerId, partnerInfo }: { peerId: string, partnerInfo: any }) => {
       setPartnerIdentity(partnerInfo.identity);
-      setMessages([{ id: Date.now().toString(), user: 'Sistema', text: `Conectado com um estranho (${partnerInfo.identity}).` }]);
+      setMessages([{ id: Date.now().toString(), user: 'Sistema', text: 'Conectado. Diga Oi!' }]);
       
       if (peerRef.current && streamRef.current) {
         const call = peerRef.current.call(peerId, streamRef.current);
@@ -45,7 +46,6 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
     });
 
     socket.on('partner_disconnected', () => {
-      // Se o parceiro pular, eu recebo este aviso e busco um novo automaticamente
       handleSkip();
     });
 
@@ -61,10 +61,7 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
   }, []);
 
   const cleanup = (stopStream = false) => {
-    if (currentCallRef.current) { 
-      currentCallRef.current.close(); 
-      currentCallRef.current = null; 
-    }
+    if (currentCallRef.current) { currentCallRef.current.close(); currentCallRef.current = null; }
     if (stopStream && streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
@@ -72,60 +69,61 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
   };
 
-  const startStream = async () => {
-    if (streamRef.current) return streamRef.current;
-    
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
-      audio: true 
-    });
-    streamRef.current = stream;
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = stream;
-    }
-    return stream;
-  };
-
   const startMatchmaking = async () => {
     setStatus('searching');
     setMessages([]);
     try {
-      const stream = await startStream();
+      // Pede permissão e inicia stream apenas quando clica em começar
+      if (!streamRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
+          audio: true 
+        });
+        streamRef.current = stream;
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+      }
       
       if (!peerRef.current) {
         const peer = new Peer({ config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] } });
         peerRef.current = peer;
         peer.on('open', (id) => {
-          socketRef.current?.emit('join_queue', { peerId: id, identity: preferences.myIdentity, lookingFor: preferences.lookingFor });
+          socketRef.current?.emit('join_queue', { 
+            peerId: id, 
+            identity: preferences.myIdentity, 
+            lookingFor: preferences.lookingFor 
+          });
         });
         peer.on('call', (call) => {
-          call.answer(stream);
-          setupCallListeners(call);
-          setStatus('connected');
+          if (streamRef.current) {
+            call.answer(streamRef.current);
+            setupCallListeners(call);
+            setStatus('connected');
+          }
         });
       } else {
-        socketRef.current?.emit('join_queue', { peerId: peerRef.current.id, identity: preferences.myIdentity, lookingFor: preferences.lookingFor });
+        socketRef.current?.emit('join_queue', { 
+          peerId: peerRef.current.id, 
+          identity: preferences.myIdentity, 
+          lookingFor: preferences.lookingFor 
+        });
       }
     } catch (err) {
       setStatus('idle');
-      alert("Habilite a câmera para conversar.");
+      alert("Para conversar, você precisa habilitar a câmera e o microfone.");
     }
   };
 
   const setupCallListeners = (call: any) => {
     currentCallRef.current = call;
     call.on('stream', (remoteStream: MediaStream) => {
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = remoteStream;
-      }
+      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
     });
   };
 
   const handleSkip = () => {
-    socketRef.current?.emit('leave_match'); // Notifica o outro lado para pular também
+    socketRef.current?.emit('leave_match'); 
     cleanup(false);
     setStatus('searching');
-    // Pequeno delay para sincronia com o motor
     setTimeout(() => {
       if (peerRef.current?.id) {
         socketRef.current?.emit('join_queue', { 
@@ -133,8 +131,10 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
           identity: preferences.myIdentity, 
           lookingFor: preferences.lookingFor 
         });
+      } else {
+        startMatchmaking();
       }
-    }, 200);
+    }, 100);
   };
 
   const sendMessage = (text: string) => {
@@ -145,11 +145,14 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
   return (
     <div className="flex flex-col md:flex-row h-full w-full overflow-hidden bg-slate-950">
       {status === 'idle' ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <Globe size={64} className="text-indigo-600 mb-8 animate-pulse" />
-          <h2 className="text-4xl font-black mb-6 tracking-tighter uppercase">Conecte-se agora</h2>
-          <Button onClick={startMatchmaking} disabled={serverStatus !== 'online'} className="px-14 py-6 text-xl rounded-full">
-            {serverStatus === 'online' ? 'COMEÇAR CHAT' : 'CONECTANDO...'}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+          <div className="w-24 h-24 bg-indigo-600/10 rounded-full flex items-center justify-center mb-8 border border-indigo-600/20">
+            <Globe size={48} className="text-indigo-500 animate-pulse" />
+          </div>
+          <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter">Conectar Instantaneamente</h2>
+          <p className="text-slate-500 mb-10 max-w-xs text-sm">Sua câmera será ativada para iniciar o chat de vídeo com estranhos.</p>
+          <Button onClick={startMatchmaking} className="px-16 py-6 text-xl rounded-full shadow-2xl shadow-indigo-600/20">
+            ENTRAR NO CHAT
           </Button>
         </div>
       ) : (
@@ -158,31 +161,34 @@ const RandomTab: React.FC<RandomTabProps> = ({ preferences }) => {
             <div className="relative flex-1 w-full h-full flex items-center justify-center bg-slate-900">
               {status === 'searching' && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-30">
-                  <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-                  <p className="text-indigo-500 font-black uppercase text-[10px] tracking-widest animate-pulse">Buscando...</p>
+                  <div className="w-12 h-12 border-[3px] border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
+                  <p className="text-indigo-500 font-black uppercase text-[10px] tracking-[0.4em] animate-pulse">Buscando...</p>
                 </div>
               )}
-              <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover md:object-contain bg-black" />
+              <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover md:object-contain" />
               
-              <div className="absolute top-4 left-4 z-40 bg-black/60 px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/5">
-                {status === 'connected' ? `ESTRANHO: ${partnerIdentity}` : 'FILA DE ESPERA'}
+              <div className="absolute top-4 left-4 z-40 flex items-center gap-2">
+                <div className="bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black text-white uppercase border border-white/5 flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></div>
+                  {status === 'connected' ? `ESTRANHO: ${partnerIdentity}` : 'PROCURANDO'}
+                </div>
               </div>
 
-              <div className="absolute bottom-6 left-6 w-32 md:w-44 aspect-video bg-slate-800 rounded-2xl overflow-hidden border border-white/10 z-40 shadow-2xl">
+              <div className="absolute bottom-6 left-6 w-28 sm:w-40 aspect-video bg-slate-800 rounded-2xl overflow-hidden border border-white/10 z-40 shadow-2xl">
                 <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover mirror" />
               </div>
 
               <div className="absolute bottom-6 right-6 z-50">
                 <button 
                   onClick={handleSkip} 
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-5 rounded-full shadow-2xl flex items-center gap-3 font-black transition-all active:scale-90"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-5 rounded-full shadow-2xl flex items-center gap-3 font-black transition-all active:scale-90 uppercase text-sm tracking-tight"
                 >
                   <SkipForward size={20} /> PRÓXIMO
                 </button>
               </div>
             </div>
           </div>
-          <div className="w-full md:w-[350px] lg:w-[400px] h-[40dvh] md:h-full flex flex-col shrink-0 border-t md:border-t-0 md:border-l border-slate-800">
+          <div className="w-full md:w-[350px] lg:w-[400px] h-[45dvh] md:h-full flex flex-col shrink-0 border-t md:border-t-0 md:border-l border-slate-800">
             <ChatBox messages={messages} onSendMessage={sendMessage} />
           </div>
         </>
