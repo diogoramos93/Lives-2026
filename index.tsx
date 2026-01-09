@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useMemo, ReactNode, ErrorInfo } from 'react';
+import React, { Component, useState, useEffect, useMemo, ReactNode, ErrorInfo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppTab, UserPreferences } from './types';
 import Navbar from './components/Navbar';
@@ -17,14 +16,11 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-// Fix: Explicitly defining the constructor and calling super(props) ensures that 'this.props' is correctly initialized and recognized by the TypeScript compiler.
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
+// Fix: Explicitly importing and extending 'Component' from 'react' ensures the TypeScript compiler correctly identifies 'this.props' in the class.
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = { hasError: false };
 
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
     return { hasError: true };
   }
 
@@ -35,12 +31,13 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 text-center text-white">
+        <div className="h-[100dvh] bg-slate-950 flex flex-col items-center justify-center p-8 text-center text-white">
           <h1 className="text-xl font-bold mb-4">Erro de Inicialização</h1>
           <button onClick={() => window.location.reload()} className="bg-indigo-600 px-6 py-2 rounded-xl text-sm font-bold">Recarregar</button>
         </div>
       );
     }
+    // Fix: Accessing 'this.props.children' now works correctly as 'ErrorBoundary' is explicitly recognized as a React Component.
     return this.props.children;
   }
 }
@@ -103,56 +100,59 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500/30">
+    <div className="h-[100dvh] w-full flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500/30 overflow-hidden">
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="flex-1 overflow-hidden relative">
+      <main className="flex-1 relative min-h-0 w-full overflow-hidden">
         {activeTab === AppTab.RANDOM && <RandomTab preferences={preferences} />}
         {activeTab === AppTab.LIVE && <LiveTab preferences={preferences} />}
         {activeTab === AppTab.HOME && (
-          <div className="flex flex-col items-center justify-center h-full p-6 text-center animate-in fade-in zoom-in duration-700">
-            <h1 className="text-6xl md:text-8xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent tracking-tighter">
-              MAISJOB
-            </h1>
-            <div className="flex flex-col items-center gap-2 mb-12">
-              <p className="text-slate-400 text-lg">
-                Olá, <span className="text-indigo-400 font-bold capitalize">{identityLabel}</span>. Pronto para conectar?
-              </p>
-              <button 
-                onClick={resetIdentity}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-indigo-400 transition-colors"
-              >
-                <Settings2 size={12} /> Mudar Identidade
-              </button>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-              <button 
-                onClick={() => setActiveTab(AppTab.RANDOM)} 
-                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-5 rounded-2xl font-black text-xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-indigo-600/20"
-              >
-                CHAT RANDOM
-              </button>
-              <button 
-                onClick={() => setActiveTab(AppTab.LIVE)} 
-                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-8 py-5 rounded-2xl font-black text-xl transition-all hover:scale-105 active:scale-95 border border-white/5"
-              >
-                VER LIVES
-              </button>
-            </div>
-            
-            <div className="mt-16 grid grid-cols-3 gap-8 opacity-40">
-               <div className="flex flex-col items-center gap-2">
-                 <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
-                 <span className="text-[10px] font-black uppercase tracking-widest">Privado</span>
-               </div>
-               <div className="flex flex-col items-center gap-2">
-                 <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
-                 <span className="text-[10px] font-black uppercase tracking-widest">Seguro</span>
-               </div>
-               <div className="flex flex-col items-center gap-2">
-                 <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
-                 <span className="text-[10px] font-black uppercase tracking-widest">Rápido</span>
-               </div>
+          <div className="flex flex-col items-center justify-center h-full w-full p-6 text-center animate-in fade-in zoom-in duration-700 overflow-y-auto hide-scrollbar">
+            <div className="w-full max-w-lg flex flex-col items-center py-10">
+              <h1 className="text-6xl sm:text-7xl md:text-8xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent tracking-tighter shrink-0">
+                MAISJOB
+              </h1>
+              
+              <div className="flex flex-col items-center gap-3 mb-12 shrink-0">
+                <p className="text-slate-400 text-lg sm:text-xl">
+                  Olá, <span className="text-indigo-400 font-extrabold capitalize">{identityLabel}</span>. Pronto para conectar?
+                </p>
+                <button 
+                  onClick={resetIdentity}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-all border border-slate-800"
+                >
+                  <Settings2 size={14} /> Mudar Identidade
+                </button>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 w-full px-4">
+                <button 
+                  onClick={() => setActiveTab(AppTab.RANDOM)} 
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-5 rounded-3xl font-black text-xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-indigo-600/20"
+                >
+                  CHAT RANDOM
+                </button>
+                <button 
+                  onClick={() => setActiveTab(AppTab.LIVE)} 
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-8 py-5 rounded-3xl font-black text-xl transition-all hover:scale-105 active:scale-95 border border-white/5"
+                >
+                  VER LIVES
+                </button>
+              </div>
+              
+              <div className="mt-16 grid grid-cols-3 gap-6 sm:gap-12 opacity-30 shrink-0">
+                 <div className="flex flex-col items-center gap-2">
+                   <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
+                   <span className="text-[10px] font-black uppercase tracking-widest">Privado</span>
+                 </div>
+                 <div className="flex flex-col items-center gap-2">
+                   <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
+                   <span className="text-[10px] font-black uppercase tracking-widest">Seguro</span>
+                 </div>
+                 <div className="flex flex-col items-center gap-2">
+                   <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
+                   <span className="text-[10px] font-black uppercase tracking-widest">Rápido</span>
+                 </div>
+              </div>
             </div>
           </div>
         )}
