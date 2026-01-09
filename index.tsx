@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useMemo, Component, ReactNode, ErrorInfo } from 'react';
+import React, { useState, useEffect, useMemo, ReactNode, ErrorInfo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppTab, UserPreferences } from './types';
 import Navbar from './components/Navbar';
@@ -7,6 +6,7 @@ import RandomTab from './components/RandomTab';
 import LiveTab from './components/LiveTab';
 import AgeGate from './components/AgeGate';
 import IdentitySetup from './components/IdentitySetup';
+import { Settings2 } from 'lucide-react';
 
 interface ErrorBoundaryProps {
   children?: ReactNode;
@@ -16,9 +16,8 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-// Fix: Use the named 'Component' import from React and provide generic type parameters 
-// to ensure the TypeScript compiler correctly recognizes 'this.props' and 'this.state'.
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+// Fix: Using React.Component explicitly to ensure 'this.props' is correctly typed and recognized by the TypeScript compiler.
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { hasError: false };
 
   static getDerivedStateFromError() {
@@ -38,7 +37,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         </div>
       );
     }
-    // Fix: Accessing children via this.props which is now correctly inherited from Component<ErrorBoundaryProps, ErrorBoundaryState>
     return this.props.children;
   }
 }
@@ -52,7 +50,6 @@ const App = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.HOME);
 
   useEffect(() => {
-    // Remove o loader com transição de opacidade
     const loader = document.getElementById('initial-loader');
     if (loader) {
       loader.style.opacity = '0';
@@ -84,6 +81,11 @@ const App = () => {
     setActiveTab(AppTab.RANDOM);
   };
 
+  const resetIdentity = () => {
+    sessionStorage.removeItem('user_prefs');
+    setPreferences({ myIdentity: null, lookingFor: [] });
+  };
+
   const identityLabel = useMemo(() => {
     return preferences.myIdentity?.replace('_', ' ') || '';
   }, [preferences.myIdentity]);
@@ -107,9 +109,18 @@ const App = () => {
             <h1 className="text-6xl md:text-8xl font-black mb-4 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent tracking-tighter">
               MAISJOB
             </h1>
-            <p className="text-slate-400 mb-12 text-lg">
-              Olá, <span className="text-indigo-400 font-bold capitalize">{identityLabel}</span>. Pronto para conectar?
-            </p>
+            <div className="flex flex-col items-center gap-2 mb-12">
+              <p className="text-slate-400 text-lg">
+                Olá, <span className="text-indigo-400 font-bold capitalize">{identityLabel}</span>. Pronto para conectar?
+              </p>
+              <button 
+                onClick={resetIdentity}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-indigo-400 transition-colors"
+              >
+                <Settings2 size={12} /> Mudar Identidade
+              </button>
+            </div>
+            
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
               <button 
                 onClick={() => setActiveTab(AppTab.RANDOM)} 
